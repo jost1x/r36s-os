@@ -1,0 +1,22 @@
+# Armbian source checkout and generated build artifacts.
+/work/
+
+# Generated images, packages, archives and logs.
+*.img
+*.img.xz
+*.iso
+*.deb
+*.log
+
+# Local credentials and machine-specific files.
+.env
+.env.*
+*.secret
+*.secrets
+
+# Editor and Python artifacts.
+.DS_Store
+*.swp
+*~
+__pycache__/
+*.py[cod]

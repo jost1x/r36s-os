@@ -1,0 +1,68 @@
+# Experimental R36S bring-up profile for Armbian Build Framework.
+# This is deliberately WIP until the R36S device tree and boot chain are
+# validated on hardware. Do not promote this to .conf/.csc yet.
+BOARD_NAME="R36S Panel 4 software profile (experimental)"
+BOARD_VENDOR="R36S Hybrid OS"
+BOARDFAMILY="rockchip64"
+BOARD_MAINTAINER="R36S Hybrid OS contributors"
+KERNEL_TARGET="current"
+KERNEL_TEST_TARGET="current"
+# Keep this board profile on the kernel source that produced the inspected
+# 6.18.58 candidate; Armbian's default linux-6.18.y reference moves over time.
+KERNELBRANCH="commit:2926d88bb7fc4608fd942453d929c39e4e5ec006"
+
+# Keep the generated cpufrequtils bounds within the PX30 OPP table used by
+# rk3326.dtsi. CPUFREQUTILS_ENABLE remains disabled during bring-up.
+CPUMIN="600000"
+CPUMAX="1296000"
+
+# Apply the base Rockchip64 6.18 patches first, then the project-owned R36S
+# Panel 4 device-tree/driver patch.
+KERNELPATCHDIR="archive/rockchip64-6.18 r36s-6.18"
+enable_extension "r36s-kernel-config"
+
+# R36S board support maintained as source on top of upstream U-Boot v2024.04.
+# Pin its reviewed source commit instead of using a prebuilt bootloader blob.
+BOOTSOURCE="https://github.com/AndreRenaud/u-boot-r36s.git"
+BOOTCONFIG="r36s_defconfig"
+BOOTBRANCH_BOARD="commit:afcfed9c686cb8fe90b683050a83e1f62a04e818"
+# Apply the upstream v2024.04 fixes, then make the removable SD slot the
+# first and only SPL boot source for this eMMC-less board.
+BOOTPATCHDIR="v2024.04 r36s"
+BOOT_SOC="px30"
+# The pinned r36s_defconfig currently leaves ROCKCHIP_EXTERNAL_TPL off, so
+# Binman uses the source PX30 TPL. With no LPDDR Kconfig selection, that code
+# falls back to its DDR3 333 MHz table; verify the physical DRAM type on-board.
+BOOT_SCENARIO="binman-atf-mainline"
+
+# This profile matches the Panel 4 software configuration observed on the
+# inspected unit. It does not claim all R36S consoles have the same LCD.
+BOOT_FDT_FILE="rockchip/rk3326-r36s-panel4.dtb"
+
+IMAGE_PARTITION_TABLE="msdos"
+BOOTFS_TYPE="fat"
+
+# Armbian's generic serial-getty override enables root autologin but omits an
+# explicit speed. The R36S kernel console is ttyS2 at 1.5 Mbaud; pin that
+# instance to the same speed so agetty cannot fall back to 9600 when autologin
+# skips input-based terminal setup.
+function post_family_tweaks__r36s_serial_getty() {
+	local dropin="${SDCARD}/etc/systemd/system/serial-getty@ttyS2.service.d/override.conf"
+	mkdir -p "$(dirname -- "${dropin}")"
+	cat > "${dropin}" <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --noissue --autologin root %I 1500000 $TERM
+EOF
+}
+
+# Install the read-only hardware snapshot tool in the candidate rootfs.
+function post_family_tweaks__r36s_diagnostics() {
+	local source="${SRC}/userpatches/scripts/collect-r36s-diagnostics.sh"
+	local destination="${SDCARD}/usr/local/sbin/r36s-diagnostics"
+	if [[ ! -r "${source}" ]]; then
+		display_alert "R36S diagnostics script missing" "${source}" "err"
+		return 1
+	fi
+	install -D -m 0755 "${source}" "${destination}"
+}

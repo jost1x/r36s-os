@@ -1,0 +1,20 @@
+#!/bin/sh
+# Compatibility for Armbian's legacy update-binfmts calls in Debian Trixie.
+# The qemu-user-binfmt package now ships systemd-binfmt definitions instead.
+set -eu
+
+case "${1:-}:${2:-}" in
+	--enable:qemu-*) ;;
+	*)
+		echo "r36s-update-binfmts: unsupported invocation: $*" >&2
+		exit 2
+		;;
+esac
+
+if [ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]; then
+	/usr/lib/systemd/systemd-binfmt \
+		/usr/lib/binfmt.d/qemu-arm.conf \
+		/usr/lib/binfmt.d/qemu-aarch64.conf \
+		/usr/lib/binfmt.d/qemu-riscv64.conf \
+		/usr/lib/binfmt.d/qemu-loongarch64.conf
+fi

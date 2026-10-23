@@ -1,0 +1,35 @@
+Subject: [PATCH] rockchip: rk3326-r36s: boot from removable SD first
+
+PX30's generic U-Boot DTSI assigns mmc0 and the first SPL boot slot to the
+eMMC controller at ff390000. The R36S uses the removable SD controller at
+ff370000 and has no onboard eMMC. Add a board-specific U-Boot DTSI which
+retains the SoC setup but makes the SD slot mmc0 and the only SPL boot source.
+
+---
+ arch/arm/dts/rk3326-r36s-u-boot.dtsi | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+ create mode 100644 arch/arm/dts/rk3326-r36s-u-boot.dtsi
+
+diff --git a/arch/arm/dts/rk3326-r36s-u-boot.dtsi b/arch/arm/dts/rk3326-r36s-u-boot.dtsi
+new file mode 100644
+--- /dev/null
++++ b/arch/arm/dts/rk3326-r36s-u-boot.dtsi
+@@ -0,0 +1,16 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * R36S has no onboard eMMC. The removable card is PX30 SDMMC at ff370000.
++ */
++#include "px30-u-boot.dtsi"
++
++/ {
++	aliases {
++		mmc0 = &sdmmc;
++		mmc1 = &emmc;
++	};
++
++	chosen {
++		u-boot,spl-boot-order = &sdmmc;
++	};
++};
+
+-- 

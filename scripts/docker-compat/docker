@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Narrow Docker CLI workarounds for the local Armbian build environment.
+set -e
+
+real_docker="${R36S_REAL_DOCKER:-/usr/bin/docker}"
+
+if [[ "${1:-}" == buildx && "${2:-}" == build ]]; then
+	exec "${real_docker}" "$1" "$2" --builder default "${@:3}"
+fi
+
+if [[ "${1:-}" == pull && -n "${R36S_ARMBIAN_BUILD_BASE_TAG:-}" && -n "${R36S_ARMBIAN_BUILD_BASE_IMAGE:-}" ]]; then
+	for image in "${@:2}"; do
+		if [[ "${image}" == "${R36S_ARMBIAN_BUILD_BASE_TAG}" ]]; then
+			"${real_docker}" pull "${R36S_ARMBIAN_BUILD_BASE_IMAGE}"
+			"${real_docker}" tag "${R36S_ARMBIAN_BUILD_BASE_IMAGE}" "${R36S_ARMBIAN_BUILD_BASE_TAG}"
+			exit 0
+		fi
+	done
+fi
+
+if [[ "${1:-}" == run ]]; then
+	needs_rlimit=0
+	has_ulimit=0
+	for arg in "${@:2}"; do
+		[[ "${arg}" == /usr/sbin/losetup ]] && needs_rlimit=1
+		[[ "${arg}" == --ulimit || "${arg}" == --ulimit=* ]] && has_ulimit=1
+	done
+	if (( needs_rlimit && ! has_ulimit )); then
+		exec "${real_docker}" run --ulimit nofile=1048576:1048576 "${@:2}"
+	fi
+fi
+
+exec "${real_docker}" "$@"

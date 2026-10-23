@@ -1,0 +1,50 @@
+fb41f770386b668c341a4a17233e0a800d626406916e9e0fe603e4a7ce5ec03f  reference/arkos-r36s/boot/ScreenFiles/Panel 0/PID.txt
+437a1a4e4cf31bbff133f311caca222b9f95fb6a5e4152a3f07f9ac611e1974a  reference/arkos-r36s/boot/ScreenFiles/Panel 0/boot.ini
+36446f8f7558f68357a03d44b468f4f16c159f2452912e554f8d5995e4161f16  reference/arkos-r36s/boot/ScreenFiles/Panel 0/rg351mp-kernel.dtb
+cd7caf203758513630ca4d405abca3222b212c44319c7117a3f912170cc0204c  reference/arkos-r36s/boot/ScreenFiles/Panel 0/rk3326-r35s-linux.dtb
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 0/rk3326-rg351mp-linux.dtb
+23254922b9ad989232a26cb52b36980cdd9e07d23c6a4827bf1a6ca56e6abc7d  reference/arkos-r36s/boot/ScreenFiles/Panel 0/rk3326-rg351mp-linux.dtb.orig
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 0/rk3326-rg351mp-linux.dtb.tony
+5be0d075821fef704f6e4e165113a2cebfb340ced10ee2325f6659f497073881  reference/arkos-r36s/boot/ScreenFiles/Panel 1/PID.txt
+437a1a4e4cf31bbff133f311caca222b9f95fb6a5e4152a3f07f9ac611e1974a  reference/arkos-r36s/boot/ScreenFiles/Panel 1/boot.ini
+48aa0f40e2fd1cdd883c5cd3e6efaba50f9e7e084e2d72c1d56593de83b4f2f3  reference/arkos-r36s/boot/ScreenFiles/Panel 1/rg351mp-kernel.dtb
+f226d307ebb6784fd2fd7152b997a714e6678a394173580b7864f096fe85667e  reference/arkos-r36s/boot/ScreenFiles/Panel 1/rk3326-r35s-linux.dtb
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 1/rk3326-rg351mp-linux.dtb
+23254922b9ad989232a26cb52b36980cdd9e07d23c6a4827bf1a6ca56e6abc7d  reference/arkos-r36s/boot/ScreenFiles/Panel 1/rk3326-rg351mp-linux.dtb.orig
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 1/rk3326-rg351mp-linux.dtb.tony
+9b20817282a8340932728917cb85b159e01958349fb7ef1a71451e47d63970fd  reference/arkos-r36s/boot/ScreenFiles/Panel 2/PID.txt
+437a1a4e4cf31bbff133f311caca222b9f95fb6a5e4152a3f07f9ac611e1974a  reference/arkos-r36s/boot/ScreenFiles/Panel 2/boot.ini
+df9a6b2e7123b6428e40abab30a507eef5d9a4e01d308c720dc414c1ce1822b6  reference/arkos-r36s/boot/ScreenFiles/Panel 2/rg351mp-kernel.dtb
+6e0a4b283b650f108f74883227cc6ffdfc93278ac7e4b486ea3562463a157734  reference/arkos-r36s/boot/ScreenFiles/Panel 2/rk3326-r35s-linux.dtb
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 2/rk3326-rg351mp-linux.dtb
+23254922b9ad989232a26cb52b36980cdd9e07d23c6a4827bf1a6ca56e6abc7d  reference/arkos-r36s/boot/ScreenFiles/Panel 2/rk3326-rg351mp-linux.dtb.orig
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 2/rk3326-rg351mp-linux.dtb.tony
+9b20817282a8340932728917cb85b159e01958349fb7ef1a71451e47d63970fd  reference/arkos-r36s/boot/ScreenFiles/Panel 3/PID.txt
+437a1a4e4cf31bbff133f311caca222b9f95fb6a5e4152a3f07f9ac611e1974a  reference/arkos-r36s/boot/ScreenFiles/Panel 3/boot.ini
+d5af1b225c8035dc68f4f25c15d2f9cc87d9160ab6751e04df3d50a1b7213e59  reference/arkos-r36s/boot/ScreenFiles/Panel 3/rg351mp-kernel.dtb
+b4212221b03a0e9e5a2d0c7dea0d45316c68024530c9869f1bdbbcf9de7f737c  reference/arkos-r36s/boot/ScreenFiles/Panel 3/rk3326-r35s-linux.dtb
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 3/rk3326-rg351mp-linux.dtb
+23254922b9ad989232a26cb52b36980cdd9e07d23c6a4827bf1a6ca56e6abc7d  reference/arkos-r36s/boot/ScreenFiles/Panel 3/rk3326-rg351mp-linux.dtb.orig
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 3/rk3326-rg351mp-linux.dtb.tony
+ceff6a2814a159730fe4cd3974e1ff037d9d2c7f56be2b1bd76ac5b2ea9284c1  reference/arkos-r36s/boot/ScreenFiles/Panel 4 - V22/PID.txt
+b3b709063888f9c2ed4fa09dbfca37ed32fcdf894f28924883c9da1ef39db608  reference/arkos-r36s/boot/ScreenFiles/Panel 4 - V22/boot.ini
+fcd325ee957987c8c2fb68d3098594bc58a22fb93ed7c8febe399ce5a6527c98  reference/arkos-r36s/boot/ScreenFiles/Panel 4 - V22/rg351mp-kernel.dtb
+7b4e1e9ff819c0af758b6096f45ea0979535d3bf0ef095aa35f8544f8da4dea6  reference/arkos-r36s/boot/ScreenFiles/Panel 4 - V22/rk3326-r35s-linux.dtb
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 4 - V22/rk3326-rg351mp-linux.dtb
+23254922b9ad989232a26cb52b36980cdd9e07d23c6a4827bf1a6ca56e6abc7d  reference/arkos-r36s/boot/ScreenFiles/Panel 4 - V22/rk3326-rg351mp-linux.dtb.orig
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 4 - V22/rk3326-rg351mp-linux.dtb.tony
+f323a4faf4cfe399a98c7ea9c4c23fb47e758b753e4711702e83b9dae646d153  reference/arkos-r36s/boot/ScreenFiles/Panel 4/PID.txt
+437a1a4e4cf31bbff133f311caca222b9f95fb6a5e4152a3f07f9ac611e1974a  reference/arkos-r36s/boot/ScreenFiles/Panel 4/boot.ini
+fcd325ee957987c8c2fb68d3098594bc58a22fb93ed7c8febe399ce5a6527c98  reference/arkos-r36s/boot/ScreenFiles/Panel 4/rg351mp-kernel.dtb
+ac546dd7ca90c53c2d6111449b9624fc0d875fbe8b1eeead8a9e25c538b1cd98  reference/arkos-r36s/boot/ScreenFiles/Panel 4/rk3326-r35s-linux.dtb
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 4/rk3326-rg351mp-linux.dtb
+23254922b9ad989232a26cb52b36980cdd9e07d23c6a4827bf1a6ca56e6abc7d  reference/arkos-r36s/boot/ScreenFiles/Panel 4/rk3326-rg351mp-linux.dtb.orig
+b2bba5d0a1a7560cf0ec69d26f9e84584403e7206fc11d4c5ec4aea35349917a  reference/arkos-r36s/boot/ScreenFiles/Panel 4/rk3326-rg351mp-linux.dtb.tony
+3305f6b8d32b5978ef72e8461b167dce849dd608ad2a19228670ec400cdc9eb7  reference/arkos-r36s/boot/ScreenFiles/Panel 5/Image
+f8711fb119169b56e5b30b0e9cd4973cb47e95d253214f64e3e1020f94a4a218  reference/arkos-r36s/boot/ScreenFiles/Panel 5/PID.txt
+437a1a4e4cf31bbff133f311caca222b9f95fb6a5e4152a3f07f9ac611e1974a  reference/arkos-r36s/boot/ScreenFiles/Panel 5/boot.ini
+b5646ce861c3eb368672e7673d6f6d0ad0eb89bbb7dd410a425f1864496bb130  reference/arkos-r36s/boot/ScreenFiles/Panel 5/rg351mp-kernel.dtb
+b5646ce861c3eb368672e7673d6f6d0ad0eb89bbb7dd410a425f1864496bb130  reference/arkos-r36s/boot/ScreenFiles/Panel 5/rg351p-kernel.dtb
+7689fe9b9e1bfcf98c9383d922c0f1e3df35ba57b1cf3eda16264866b33a06c6  reference/arkos-r36s/boot/ScreenFiles/Panel 5/rk3326-r35s-linux.dtb
+b442894eabd2a9716ba5b8dda817251d94cc13689b341f7a861ad3f33998ec4e  reference/arkos-r36s/boot/boot.ini
+ac546dd7ca90c53c2d6111449b9624fc0d875fbe8b1eeead8a9e25c538b1cd98  reference/arkos-r36s/boot/rk3326-r35s-linux.dtb
