@@ -42,7 +42,7 @@ BOOT_FDT_FILE="rockchip/rk3326-r36s-panel4.dtb"
 IMAGE_PARTITION_TABLE="msdos"
 BOOTFS_TYPE="fat"
 
-# Armbian's generic serial-getty override enables root autologin but omits an
+# Armbian's generic serial-getty override enables autologin but omits an
 # explicit speed. The R36S kernel console is ttyS2 at 1.5 Mbaud; pin that
 # instance to the same speed so agetty cannot fall back to 9600 when autologin
 # skips input-based terminal setup.
@@ -52,8 +52,114 @@ function post_family_tweaks__r36s_serial_getty() {
 	cat > "${dropin}" <<'EOF'
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty --noissue --autologin root %I 1500000 $TERM
+ExecStart=-/sbin/agetty --noissue --autologin r36s %I 1500000 $TERM
 EOF
+}
+
+# Create the user and Wi-Fi profile before first boot. The provisioning file
+# is local build input and is never tracked by Git.
+function post_family_tweaks__r36s_console_access() {
+	local provision="${SRC}/userpatches/r36s-provisioning.env"
+	local had_xtrace=0
+	[[ $- == *x* ]] && had_xtrace=1
+	set +x
+	if [[ ! -r "${provision}" ]]; then
+		display_alert "R36S provisioning file missing" "${provision}" "err"
+		return 1
+	fi
+	source "${provision}"
+	if [[ -z "${R36S_WIFI_SSID:-}" || -z "${R36S_WIFI_PASSWORD:-}" || -z "${R36S_USER_PASSWORD:-}" ]]; then
+		display_alert "R36S provisioning values missing" "Check local provisioning file" "err"
+		return 1
+	fi
+
+	chroot_sdcard groupadd --force sudo
+	if ! chroot_sdcard id -u r36s >/dev/null 2>&1; then
+		chroot_sdcard useradd --create-home --shell /bin/bash --groups sudo r36s
+	fi
+	chroot_sdcard usermod --append --groups sudo r36s
+	printf 'r36s:%s\n' "${R36S_USER_PASSWORD}" | chroot_sdcard chpasswd
+	chroot_sdcard passwd --lock root
+
+	# Give wireless interfaces a stable generic name so Netplan does not depend
+	# on a USB adapter's MAC-derived wlx name.
+	local link_dir="${SDCARD}/etc/systemd/network"
+	mkdir -p "${link_dir}"
+	cat > "${link_dir}/10-r36s-wifi.link" <<'EOF'
+[Match]
+Type=wlan
+
+[Link]
+NamePolicy=
+Name=wlan0
+EOF
+	chmod 0644 "${link_dir}/10-r36s-wifi.link"
+
+	export R36S_WIFI_SSID R36S_WIFI_PASSWORD
+	python3 - "${SDCARD}/etc/netplan/20-r36s-wifi.yaml" <<'PY'
+import json
+import os
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+ssid = json.dumps(os.environ["R36S_WIFI_SSID"], ensure_ascii=False)
+password = json.dumps(os.environ["R36S_WIFI_PASSWORD"], ensure_ascii=False)
+path.write_text(
+    "network:\n"
+    "  version: 2\n"
+    "  renderer: networkd\n"
+    "  wifis:\n"
+    "    wlan0:\n"
+    "      dhcp4: true\n"
+    "      regulatory-domain: CL\n"
+    f"      access-points:\n        {ssid}:\n          password: {password}\n",
+    encoding="utf-8",
+)
+path.chmod(0o600)
+PY
+
+	# Skip Armbian's interactive first-login wizard; the user and network are
+	# configured in the image already.
+	rm -f "${SDCARD}/root/.not_logged_in_yet"
+	# Armbian normally makes its MOTD scripts executable during first login.
+	# Since this image skips that wizard, preserve the SSH/console login banner.
+	printf 'r36s\n' > "${SDCARD}/etc/hostname"
+	local ssh_unit="${SDCARD}/usr/lib/systemd/system/ssh.service"
+	if [[ ! -e "${ssh_unit}" ]]; then
+		ssh_unit="${SDCARD}/lib/systemd/system/ssh.service"
+	fi
+	if [[ ! -e "${ssh_unit}" ]]; then
+		display_alert "openssh-server service missing" "${ssh_unit}" "err"
+		return 1
+	fi
+	local system_wants="${SDCARD}/etc/systemd/system/multi-user.target.wants"
+	mkdir -p "${system_wants}"
+	ln -sf "${ssh_unit#${SDCARD}}" "${system_wants}/ssh.service"
+
+	local dropin="${SDCARD}/etc/systemd/system/getty@tty1.service.d/override.conf"
+	local info_script="${SDCARD}/usr/local/sbin/r36s-console-info"
+	local info_service="${SDCARD}/etc/systemd/system/r36s-show-ip.service"
+	local motd_service="${SDCARD}/etc/systemd/system/r36s-enable-motd.service"
+	local wants="${SDCARD}/etc/systemd/system/multi-user.target.wants"
+	mkdir -p "$(dirname -- "${dropin}")"
+	cat > "${dropin}" <<'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --noissue --autologin r36s %I $TERM
+Type=idle
+EOF
+	install -D -m 0755 "${SRC}/userpatches/scripts/r36s-console-info.sh" "${info_script}"
+	install -D -m 0644 "${SRC}/userpatches/systemd/r36s-show-ip.service" "${info_service}"
+	install -D -m 0644 "${SRC}/userpatches/systemd/r36s-enable-motd.service" "${motd_service}"
+	mkdir -p "${wants}"
+	ln -sf ../r36s-show-ip.service "${wants}/r36s-show-ip.service"
+	ln -sf ../r36s-enable-motd.service "${wants}/r36s-enable-motd.service"
+	unset R36S_USER_PASSWORD R36S_WIFI_PASSWORD R36S_WIFI_SSID
+	if (( had_xtrace )); then
+		set -x
+	fi
+	return 0
 }
 
 # Install the read-only hardware snapshot tool in the candidate rootfs.

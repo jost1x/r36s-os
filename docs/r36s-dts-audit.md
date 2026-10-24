@@ -144,8 +144,8 @@ Artefactos verificados:
 
 | Artefacto | Evidencia |
 |---|---|
-| Imagen candidata actual | `work/armbian-build/output/images/Armbian-unofficial_26.11.0-trunk_R36s_bookworm_current_6.18.58_minimal.img`, 2.516.582.400 bytes (2,52 GB decimales / 2,34 GiB); SHA-256 `7d5ff7bc49ad17b4fe27b5825ceb084e3a2ab4d64ce0b62a1efc54d652d5de99`; UUID raíz `b65689c7-49d0-4e85-839d-d95d2de56cc0` |
-| DTB empaquetado | Verificador leyó desde la imagen `dtb/rockchip/rk3326-r36s-panel4.dtb`; SHA-256 `800d230ce63508e1d258bc5c21a66e68685574043b4fbfc6f1aa4b56ebb89d25` |
+| Imagen candidata actual | `work/armbian-build/output/images/Armbian-unofficial_26.11.0-trunk_R36s_bookworm_current_6.18.58_minimal.img`, 2.516.582.400 bytes (2,52 GB decimales / 2,34 GiB); SHA-256 `1968f3a8ffd3df0929996214eb07dd89f706d16ea88b6e3de698ade5f3210800`; UUID raíz `6dfe7755-f703-42cf-8091-ca49127e5ff1` |
+| DTB empaquetado | Verificador leyó desde la imagen `dtb/rockchip/rk3326-r36s-panel4.dtb`; SHA-256 `246443338f2e1083697423fec93a9aadc00c6c29bc86f4e563c6a7ff823e42fd` |
 | Driver | `panel-newvision-nv3051d.ko` incluido en paquete `linux-image`; `modinfo` de la build inicial mostró alias `gameconsole,r36s-panel` y licencia GPL. el paquete de la imagen nueva contiene el mismo módulo; SHA-256 verificado `dd27a087f585adff6120eb60c4324175f5e99b610030d5ff9933fd20d39dc231` |
 | Particiones | MBR/DOS; FAT de 512 MiB desde sector 32768; ext4 desde sector 1081344; inspeccionado con `sfdisk` |
 | Kernel package | SHA-256 `67838f56b8d748d7af23c99ac914bcc2c0c38ced1da65ee7fc36bd6234ec3fe0`; incluye `adc-joystick.ko`, `iio-mux.ko`, `mux-gpio.ko` |

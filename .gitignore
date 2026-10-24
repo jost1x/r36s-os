@@ -13,6 +13,7 @@
 .env.*
 *.secret
 *.secrets
+/.local/
 
 # Editor and Python artifacts.
 .DS_Store

@@ -298,7 +298,7 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3326-odroid-go2-v11.dtb
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3326-r36s-panel4.dts
-@@ -0,0 +1,716 @@
+@@ -0,0 +1,717 @@
 +// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 +/*
 + * Copyright (c) 2024 Andre Renaud <andre@ignavus.net>
@@ -829,6 +829,7 @@
 +		};
 +
 +		rk817_charger: charger {
++			dc-det-gpios = <&gpio0 RK_PB3 GPIO_ACTIVE_HIGH>;
 +			rockchip,resistor-sense-micro-ohms = <10000>;
 +			rockchip,sleep-enter-current-microamp = <300000>;
 +			rockchip,sleep-filter-current-microamp = <100000>;

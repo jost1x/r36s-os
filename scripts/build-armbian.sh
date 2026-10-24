@@ -19,12 +19,22 @@ BINFMT_COMPAT_SRC="${ROOT_DIR}/extensions/r36s-update-binfmts"
 BINFMT_COMPAT_DST="${WORK_DIR}/userpatches/extensions/r36s-update-binfmts"
 KERNEL_PATCH_SRC="${ROOT_DIR}/config/armbian/patches/kernel/r36s-6.18/0001-r36s-panel-and-device-tree.patch"
 KERNEL_PATCH_DST="${WORK_DIR}/userpatches/kernel/r36s-6.18/0001-r36s-panel-and-device-tree.patch"
+CHARGER_PATCH_SRC="${ROOT_DIR}/config/armbian/patches/kernel/r36s-6.18/0002-rk817-dc-detect-gpio.patch"
+CHARGER_PATCH_DST="${WORK_DIR}/userpatches/kernel/r36s-6.18/0002-rk817-dc-detect-gpio.patch"
 UBOOT_PATCH_SRC="${ROOT_DIR}/config/armbian/patches/u-boot/r36s/0001-r36s-boot-from-sdmmc.patch"
 UBOOT_PATCH_DST="${WORK_DIR}/userpatches/u-boot/r36s/0001-r36s-boot-from-sdmmc.patch"
 KERNEL_CONFIG_EXT_SRC="${ROOT_DIR}/extensions/r36s-kernel-config.sh"
 KERNEL_CONFIG_EXT_DST="${WORK_DIR}/userpatches/extensions/r36s-kernel-config.sh"
 DIAGNOSTICS_SRC="${ROOT_DIR}/scripts/collect-r36s-diagnostics.sh"
 DIAGNOSTICS_DST="${WORK_DIR}/userpatches/scripts/collect-r36s-diagnostics.sh"
+CONSOLE_INFO_SRC="${ROOT_DIR}/scripts/r36s-console-info.sh"
+CONSOLE_INFO_DST="${WORK_DIR}/userpatches/scripts/r36s-console-info.sh"
+CONSOLE_SERVICE_SRC="${ROOT_DIR}/config/armbian/systemd/r36s-show-ip.service"
+CONSOLE_SERVICE_DST="${WORK_DIR}/userpatches/systemd/r36s-show-ip.service"
+MOTD_SERVICE_SRC="${ROOT_DIR}/config/armbian/systemd/r36s-enable-motd.service"
+MOTD_SERVICE_DST="${WORK_DIR}/userpatches/systemd/r36s-enable-motd.service"
+PROVISIONING_SRC="${ROOT_DIR}/.local/r36s-provisioning.env"
+PROVISIONING_DST="${WORK_DIR}/userpatches/r36s-provisioning.env"
 
 usage() {
 	cat <<'EOF'
@@ -45,6 +55,17 @@ case "${ACTION}" in
 	-h|--help|help) usage; exit 0 ;;
 	*) usage >&2; exit 2 ;;
 esac
+
+if [[ ! -r "${PROVISIONING_SRC}" ]]; then
+	echo "Local R36S provisioning file is missing: ${PROVISIONING_SRC}" >&2
+	echo "Copy config/armbian/r36s-provisioning.env.example to that path and fill it in locally." >&2
+	exit 1
+fi
+provisioning_mode="$(stat -c '%a' "${PROVISIONING_SRC}")"
+if (( (8#${provisioning_mode} & 077) != 0 )); then
+	echo "Refusing insecure permissions on ${PROVISIONING_SRC}; run chmod 600 on it." >&2
+	exit 1
+fi
 
 if [[ ! -d "${WORK_DIR}/.git" ]]; then
 	if [[ -e "${WORK_DIR}" ]]; then
@@ -121,6 +142,23 @@ if [[ ! -e "${KERNEL_PATCH_DST}" ]]; then
 	fi
 fi
 
+mkdir -p "$(dirname -- "${CHARGER_PATCH_DST}")"
+if [[ -e "${CHARGER_PATCH_DST}" ]] && ! cmp -s "${CHARGER_PATCH_SRC}" "${CHARGER_PATCH_DST}"; then
+	echo "Existing R36S charger patch differs from this project: ${CHARGER_PATCH_DST}" >&2
+	echo "Review it manually; the script will not overwrite it." >&2
+	exit 1
+fi
+if [[ ! -e "${CHARGER_PATCH_DST}" ]]; then
+	if [[ -w "$(dirname -- "${CHARGER_PATCH_DST}")" ]]; then
+		install -m 0644 "${CHARGER_PATCH_SRC}" "${CHARGER_PATCH_DST}"
+	else
+		docker run --rm --user 0 \
+			-v "${ROOT_DIR}:/r36s:ro" -v "${WORK_DIR}:/armbian" \
+			"${ARMBIAN_BUILD_IMAGE}" \
+			sh -ec 'install -D -m 0644 "/r36s/config/armbian/patches/kernel/r36s-6.18/0002-rk817-dc-detect-gpio.patch" "/armbian/userpatches/kernel/r36s-6.18/0002-rk817-dc-detect-gpio.patch"'
+	fi
+fi
+
 if [[ -e "${KERNEL_CONFIG_EXT_DST}" ]] && ! cmp -s "${KERNEL_CONFIG_EXT_SRC}" "${KERNEL_CONFIG_EXT_DST}"; then
 	echo "Existing kernel config extension differs from this project: ${KERNEL_CONFIG_EXT_DST}" >&2
 	echo "Review it manually; the script will not overwrite it." >&2
@@ -133,6 +171,7 @@ echo "WIP board definition installed at ${BOARD_DST}"
 echo "U-Boot build dependencies installed at ${HOST_DEPS_DST}"
 echo "Debian Trixie binfmt compatibility shim installed at ${BINFMT_COMPAT_DST}"
 echo "R36S Panel 4 kernel patch installed at ${KERNEL_PATCH_DST}"
+echo "R36S RK817 charger patch installed at ${CHARGER_PATCH_DST}"
 echo "R36S SD-first U-Boot patch installed at ${UBOOT_PATCH_DST}"
 echo "R36S kernel config extension installed at ${KERNEL_CONFIG_EXT_DST}"
 
@@ -153,6 +192,70 @@ if [[ ! -e "${DIAGNOSTICS_DST}" ]]; then
 	fi
 fi
 echo "R36S diagnostics script installed at ${DIAGNOSTICS_DST}"
+
+mkdir -p "$(dirname -- "${CONSOLE_INFO_DST}")"
+if [[ -e "${CONSOLE_INFO_DST}" ]] && ! cmp -s "${CONSOLE_INFO_SRC}" "${CONSOLE_INFO_DST}"; then
+	echo "Existing R36S console info script differs from this project: ${CONSOLE_INFO_DST}" >&2
+	echo "Review it manually; the script will not overwrite it." >&2
+	exit 1
+fi
+if [[ ! -e "${CONSOLE_INFO_DST}" ]]; then
+	if [[ -w "$(dirname -- "${CONSOLE_INFO_DST}")" ]]; then
+		install -m 0644 "${CONSOLE_INFO_SRC}" "${CONSOLE_INFO_DST}"
+	else
+		docker run --rm --user 0 \
+			-v "${ROOT_DIR}:/r36s:ro" -v "${WORK_DIR}:/armbian" \
+			"${ARMBIAN_BUILD_IMAGE}" \
+			sh -ec 'install -D -m 0644 "/r36s/scripts/r36s-console-info.sh" "/armbian/userpatches/scripts/r36s-console-info.sh"'
+	fi
+fi
+echo "R36S console IP display script installed at ${CONSOLE_INFO_DST}"
+
+mkdir -p "$(dirname -- "${CONSOLE_SERVICE_DST}")"
+if [[ -e "${CONSOLE_SERVICE_DST}" ]] && ! cmp -s "${CONSOLE_SERVICE_SRC}" "${CONSOLE_SERVICE_DST}"; then
+	echo "Existing R36S IP display service differs from this project: ${CONSOLE_SERVICE_DST}" >&2
+	echo "Review it manually; the script will not overwrite it." >&2
+	exit 1
+fi
+if [[ ! -e "${CONSOLE_SERVICE_DST}" ]]; then
+	if [[ -w "$(dirname -- "${CONSOLE_SERVICE_DST}")" ]]; then
+		install -m 0644 "${CONSOLE_SERVICE_SRC}" "${CONSOLE_SERVICE_DST}"
+	else
+		docker run --rm --user 0 \
+			-v "${ROOT_DIR}:/r36s:ro" -v "${WORK_DIR}:/armbian" \
+			"${ARMBIAN_BUILD_IMAGE}" \
+			sh -ec 'install -D -m 0644 "/r36s/config/armbian/systemd/r36s-show-ip.service" "/armbian/userpatches/systemd/r36s-show-ip.service"'
+	fi
+fi
+echo "R36S console IP display service installed at ${CONSOLE_SERVICE_DST}"
+
+mkdir -p "$(dirname -- "${MOTD_SERVICE_DST}")"
+if [[ -e "${MOTD_SERVICE_DST}" ]] && ! cmp -s "${MOTD_SERVICE_SRC}" "${MOTD_SERVICE_DST}"; then
+	echo "Existing R36S MOTD service differs from this project: ${MOTD_SERVICE_DST}" >&2
+	echo "Review it manually; the script will not overwrite it." >&2
+	exit 1
+fi
+if [[ ! -e "${MOTD_SERVICE_DST}" ]]; then
+	if [[ -w "$(dirname -- "${MOTD_SERVICE_DST}")" ]]; then
+		install -m 0644 "${MOTD_SERVICE_SRC}" "${MOTD_SERVICE_DST}"
+	else
+		docker run --rm --user 0 \
+			-v "${ROOT_DIR}:/r36s:ro" -v "${WORK_DIR}:/armbian" \
+			"${ARMBIAN_BUILD_IMAGE}" \
+			sh -ec 'install -D -m 0644 "/r36s/config/armbian/systemd/r36s-enable-motd.service" "/armbian/userpatches/systemd/r36s-enable-motd.service"'
+	fi
+fi
+echo "R36S MOTD service installed at ${MOTD_SERVICE_DST}"
+
+if [[ -w "${WORK_DIR}/userpatches" ]]; then
+	install -m 0600 "${PROVISIONING_SRC}" "${PROVISIONING_DST}"
+else
+	docker run --ulimit nofile=1048576:1048576 --rm --user 0 \
+		-v "${ROOT_DIR}:/r36s:ro" -v "${WORK_DIR}:/armbian" \
+		"${ARMBIAN_BUILD_IMAGE}" \
+		sh -ec 'install -D -m 0600 "/r36s/.local/r36s-provisioning.env" "/armbian/userpatches/r36s-provisioning.env"'
+fi
+echo "Private R36S first-boot provisioning installed (values suppressed)"
 echo "Review docs/armbian-support-survey.md before using the generated image."
 
 if [[ "${ACTION}" == "prepare" ]]; then

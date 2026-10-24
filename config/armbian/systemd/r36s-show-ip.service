@@ -1,0 +1,16 @@
+[Unit]
+Description=Show R36S network address on the built-in screen
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/r36s-console-info
+StandardOutput=tty
+TTYPath=/dev/tty1
+TTYReset=no
+TTYVHangup=no
+TTYVTDisallocate=no
+
+[Install]
+WantedBy=multi-user.target

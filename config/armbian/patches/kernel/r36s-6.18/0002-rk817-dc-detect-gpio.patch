@@ -1,0 +1,170 @@
+--- a/drivers/power/supply/rk817_charger.c
++++ b/drivers/power/supply/rk817_charger.c
+@@ -10,6 +10,7 @@
+ 
+ #include <linux/unaligned.h>
+ #include <linux/devm-helpers.h>
++#include <linux/gpio/consumer.h>
+ #include <linux/mfd/rk808.h>
+ #include <linux/irq.h>
+ #include <linux/of.h>
+@@ -51,6 +52,7 @@
+ 
+ 	struct power_supply *bat_ps;
+ 	struct power_supply *chg_ps;
++	struct gpio_desc *dc_det_gpio;
+ 	bool plugged_in;
+ 	bool battery_present;
+ 
+@@ -570,20 +572,58 @@
+ 
+ }
+ 
+-static irqreturn_t rk817_plug_in_isr(int irq, void *cg)
++static void rk817_set_plugged_state(struct rk817_charger *charger,
++				    bool plugged_in)
+ {
+-	struct rk817_charger *charger;
++	int dc_det;
+ 
+-	charger = (struct rk817_charger *)cg;
+-	charger->plugged_in = 1;
++	if (charger->dc_det_gpio) {
++		dc_det = gpiod_get_value_cansleep(charger->dc_det_gpio);
++		if (dc_det >= 0)
++			plugged_in = dc_det;
++		else
++			dev_warn_ratelimited(charger->dev,
++					      "Failed to read DC detect GPIO: %d\n",
++					      dc_det);
++	}
++
++	if (charger->plugged_in == plugged_in)
++		return;
++
++	charger->plugged_in = plugged_in;
++	if (plugged_in)
++		charger->soc_cal = 0;
++
++	rk817_read_props(charger);
+ 	power_supply_changed(charger->chg_ps);
+ 	power_supply_changed(charger->bat_ps);
+-	/* try to recalibrate capacity if we hit full charge. */
+-	charger->soc_cal = 0;
++}
+ 
+-	rk817_read_props(charger);
++static irqreturn_t rk817_dc_det_isr(int irq, void *cg)
++{
++	struct rk817_charger *charger = cg;
++	int dc_det;
++
++	dc_det = gpiod_get_value_cansleep(charger->dc_det_gpio);
++	if (dc_det < 0) {
++		dev_err_ratelimited(charger->dev,
++				    "Failed to read DC detect GPIO: %d\n", dc_det);
++		return IRQ_HANDLED;
++	}
+ 
+-	dev_dbg(charger->dev, "Power Cord Inserted\n");
++	rk817_set_plugged_state(charger, dc_det);
++	dev_dbg(charger->dev, "DC input %s\n",
++		dc_det ? "connected" : "disconnected");
++
++	return IRQ_HANDLED;
++}
++
++static irqreturn_t rk817_plug_in_isr(int irq, void *cg)
++{
++	struct rk817_charger *charger = cg;
++
++	rk817_set_plugged_state(charger, true);
++	dev_dbg(charger->dev, "Power input detected by RK817\n");
+ 
+ 	return IRQ_HANDLED;
+ }
+@@ -595,9 +635,7 @@
+ 
+ 	charger = (struct rk817_charger *)cg;
+ 	rk808 = charger->rk808;
+-	charger->plugged_in = 0;
+-	power_supply_changed(charger->bat_ps);
+-	power_supply_changed(charger->chg_ps);
++	rk817_set_plugged_state(charger, false);
+ 
+ 	/*
+ 	 * For some reason the bits of RK817_PMIC_CHRG_IN reset whenever the
+@@ -620,8 +658,10 @@
+ 			  (0x01 << 3));
+ 
+ 	rk817_read_props(charger);
++	power_supply_changed(charger->bat_ps);
++	power_supply_changed(charger->chg_ps);
+ 
+-	dev_dbg(charger->dev, "Power Cord Removed\n");
++	dev_dbg(charger->dev, "Power input removed by RK817\n");
+ 
+ 	return IRQ_HANDLED;
+ }
+@@ -1064,6 +1104,7 @@
+ 	struct power_supply_battery_info *bat_info;
+ 	struct device *dev = &pdev->dev;
+ 	struct power_supply_config pscfg = {};
++	int dc_det_irq;
+ 	int plugin_irq, plugout_irq;
+ 	int of_value;
+ 	int ret;
+@@ -1200,6 +1241,38 @@
+ 				     "plug_out_irq request failed!\n");
+ 	}
+ 
++	if (of_find_property(node, "dc-det-gpios", NULL)) {
++		charger->dc_det_gpio = devm_fwnode_gpiod_get_index(dev,
++								  &node->fwnode,
++								  "dc-det", 0,
++								  GPIOD_IN,
++								  "rk817-dc-det");
++		if (IS_ERR(charger->dc_det_gpio))
++			return dev_err_probe(dev, PTR_ERR(charger->dc_det_gpio),
++					     "Failed to get DC detect GPIO\n");
++
++		dc_det_irq = gpiod_to_irq(charger->dc_det_gpio);
++		if (dc_det_irq < 0)
++			return dev_err_probe(dev, dc_det_irq,
++					     "Failed to map DC detect GPIO IRQ\n");
++
++		ret = devm_request_threaded_irq(dev, dc_det_irq, NULL,
++						 rk817_dc_det_isr,
++						 IRQF_TRIGGER_RISING |
++						 IRQF_TRIGGER_FALLING |
++						 IRQF_ONESHOT,
++						 "rk817_dc_det", charger);
++		if (ret)
++			return dev_err_probe(dev, ret,
++					     "DC detect IRQ request failed\n");
++
++		dc_det_irq = gpiod_get_value_cansleep(charger->dc_det_gpio);
++		if (dc_det_irq < 0)
++			return dev_err_probe(dev, dc_det_irq,
++					     "Failed to read DC detect GPIO\n");
++		charger->plugged_in = dc_det_irq;
++	}
++
+ 	ret = devm_delayed_work_autocancel(&pdev->dev, &charger->work,
+ 					   rk817_charging_monitor);
+ 	if (ret)
+--- a/Documentation/devicetree/bindings/mfd/rockchip,rk817.yaml
++++ b/Documentation/devicetree/bindings/mfd/rockchip,rk817.yaml
+@@ -119,6 +119,12 @@
+     $ref: /schemas/power/supply/power-supply.yaml
+ 
+     properties:
++      dc-det-gpios:
++        description:
++          GPIO connected to the board's external DC input detect signal.
++          The active level means that an external charger is connected.
++        maxItems: 1
++
+       monitored-battery:
+         description: |
+           A phandle to a monitored battery node that contains a valid
