@@ -1,0 +1,64 @@
+From: R36S Hybrid OS <noreply@example.invalid>
+Subject: [PATCH] clk: rockchip: prefer PX30 CRU restart over PSCI
+
+On the R36S, PSCI's system-reset handler runs before the PX30 CRU restart
+handler. Prefer the SoC-specific CRU reset path for this board.
+
+diff --git a/drivers/clk/rockchip/clk-px30.c b/drivers/clk/rockchip/clk-px30.c
+--- a/drivers/clk/rockchip/clk-px30.c
++++ b/drivers/clk/rockchip/clk-px30.c
+@@ -1037,7 +1037,7 @@
+ 	rockchip_register_softrst(np, 12, reg_base + PX30_SOFTRST_CON(0),
+ 				  ROCKCHIP_SOFTRST_HIWORD_MASK);
+ 
+-	rockchip_register_restart_notifier(ctx, PX30_GLB_SRST_FST, NULL);
++	rockchip_register_restart_notifier_priority(ctx, PX30_GLB_SRST_FST, NULL, 130);
+ 
+ 	rockchip_clk_of_add_provider(np, ctx);
+ }
+diff --git a/drivers/clk/rockchip/clk.c b/drivers/clk/rockchip/clk.c
+--- a/drivers/clk/rockchip/clk.c
++++ b/drivers/clk/rockchip/clk.c
+@@ -753,13 +753,13 @@
+ 	.priority = 128,
+ };
+ 
+-void
+-rockchip_register_restart_notifier(struct rockchip_clk_provider *ctx,
+-				   unsigned int reg,
+-				   void (*cb)(void))
++void rockchip_register_restart_notifier_priority(struct rockchip_clk_provider *ctx,
++						 unsigned int reg,
++						 void (*cb)(void), int priority)
+ {
+ 	int ret;
+ 
++	rockchip_restart_handler.priority = priority;
+ 	rst_base = ctx->reg_base;
+ 	reg_restart = reg;
+ 	cb_restart = cb;
+@@ -768,4 +768,11 @@
+ 		pr_err("%s: cannot register restart handler, %d\n",
+ 		       __func__, ret);
+ }
++EXPORT_SYMBOL_GPL(rockchip_register_restart_notifier_priority);
++
++void rockchip_register_restart_notifier(struct rockchip_clk_provider *ctx,
++					unsigned int reg, void (*cb)(void))
++{
++	rockchip_register_restart_notifier_priority(ctx, reg, cb, 128);
++}
+ EXPORT_SYMBOL_GPL(rockchip_register_restart_notifier);
+diff --git a/drivers/clk/rockchip/clk.h b/drivers/clk/rockchip/clk.h
+--- a/drivers/clk/rockchip/clk.h
++++ b/drivers/clk/rockchip/clk.h
+@@ -1212,6 +1212,9 @@
+ void rockchip_clk_protect_critical(const char *const clocks[], int nclocks);
+ void rockchip_register_restart_notifier(struct rockchip_clk_provider *ctx,
+ 					unsigned int reg, void (*cb)(void));
++void rockchip_register_restart_notifier_priority(struct rockchip_clk_provider *ctx,
++						 unsigned int reg,
++						 void (*cb)(void), int priority);
+ 
+ #define ROCKCHIP_SOFTRST_HIWORD_MASK	BIT(0)
+ 

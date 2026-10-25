@@ -21,6 +21,8 @@ KERNEL_PATCH_SRC="${ROOT_DIR}/config/armbian/patches/kernel/r36s-6.18/0001-r36s-
 KERNEL_PATCH_DST="${WORK_DIR}/userpatches/kernel/r36s-6.18/0001-r36s-panel-and-device-tree.patch"
 CHARGER_PATCH_SRC="${ROOT_DIR}/config/armbian/patches/kernel/r36s-6.18/0002-rk817-dc-detect-gpio.patch"
 CHARGER_PATCH_DST="${WORK_DIR}/userpatches/kernel/r36s-6.18/0002-rk817-dc-detect-gpio.patch"
+RESET_PATCH_SRC="${ROOT_DIR}/config/armbian/patches/kernel/r36s-6.18/0003-px30-prefer-cru-restart.patch"
+RESET_PATCH_DST="${WORK_DIR}/userpatches/kernel/r36s-6.18/0003-px30-prefer-cru-restart.patch"
 UBOOT_PATCH_SRC="${ROOT_DIR}/config/armbian/patches/u-boot/r36s/0001-r36s-boot-from-sdmmc.patch"
 UBOOT_PATCH_DST="${WORK_DIR}/userpatches/u-boot/r36s/0001-r36s-boot-from-sdmmc.patch"
 KERNEL_CONFIG_EXT_SRC="${ROOT_DIR}/extensions/r36s-kernel-config.sh"
@@ -159,6 +161,22 @@ if [[ ! -e "${CHARGER_PATCH_DST}" ]]; then
 	fi
 fi
 
+if [[ -e "${RESET_PATCH_DST}" ]] && ! cmp -s "${RESET_PATCH_SRC}" "${RESET_PATCH_DST}"; then
+	echo "Existing R36S reset patch differs from this project: ${RESET_PATCH_DST}" >&2
+	echo "Review it manually; the script will not overwrite it." >&2
+	exit 1
+fi
+if [[ ! -e "${RESET_PATCH_DST}" ]]; then
+	if [[ -w "$(dirname -- "${RESET_PATCH_DST}")" ]]; then
+		install -m 0644 "${RESET_PATCH_SRC}" "${RESET_PATCH_DST}"
+	else
+		docker run --rm --user 0 \
+			-v "${ROOT_DIR}:/r36s:ro" -v "${WORK_DIR}:/armbian" \
+			"${ARMBIAN_BUILD_IMAGE}" \
+			sh -ec 'install -D -m 0644 "/r36s/config/armbian/patches/kernel/r36s-6.18/0003-px30-prefer-cru-restart.patch" "/armbian/userpatches/kernel/r36s-6.18/0003-px30-prefer-cru-restart.patch"'
+	fi
+fi
+
 if [[ -e "${KERNEL_CONFIG_EXT_DST}" ]] && ! cmp -s "${KERNEL_CONFIG_EXT_SRC}" "${KERNEL_CONFIG_EXT_DST}"; then
 	echo "Existing kernel config extension differs from this project: ${KERNEL_CONFIG_EXT_DST}" >&2
 	echo "Review it manually; the script will not overwrite it." >&2
@@ -172,6 +190,7 @@ echo "U-Boot build dependencies installed at ${HOST_DEPS_DST}"
 echo "Debian Trixie binfmt compatibility shim installed at ${BINFMT_COMPAT_DST}"
 echo "R36S Panel 4 kernel patch installed at ${KERNEL_PATCH_DST}"
 echo "R36S RK817 charger patch installed at ${CHARGER_PATCH_DST}"
+echo "R36S PX30 CRU restart priority patch installed at ${RESET_PATCH_DST}"
 echo "R36S SD-first U-Boot patch installed at ${UBOOT_PATCH_DST}"
 echo "R36S kernel config extension installed at ${KERNEL_CONFIG_EXT_DST}"
 

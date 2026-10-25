@@ -6,24 +6,65 @@ El lector microSD físico `ff370000` aparece como `mmc0` en ArkOS y negocia SDR1
 
 ## Imagen candidata disponible
 
-La imagen más reciente es `work/armbian-build/output/images/Armbian-unofficial_26.11.0-trunk_R36s_bookworm_current_6.18.58_minimal.img`, SHA-256 `1968f3a8ffd3df0929996214eb07dd89f706d16ea88b6e3de698ade5f3210800`, UUID raíz `6dfe7755-f703-42cf-8091-ca49127e5ff1`. Incluye `/usr/local/sbin/r36s-diagnostics`, acceso local `r36s`, SSH y perfil Wi-Fi de provisioning local, además de detección DC RK817 por GPIO. La regla systemd `.link` asigna `wlan0` a la interfaz inalámbrica y Netplan configura ese nombre. El servicio `r36s-enable-motd` se ejecuta antes de SSH y getty para habilitar los scripts del banner dinámico de Armbian; se inspeccionó su contenido y habilitación en la imagen. Build y verificación offline pasaron; falta probarlo en la consola.
+La imagen candidata anterior es `work/armbian-build/output/images/Armbian-unofficial_26.11.0-trunk_R36s_bookworm_current_6.18.58_minimal.img`, SHA-256 `0dcf1e45bd98cc72e9c412b00879908207755b2407068363e09e72b586858576`, UUID raíz `a6548378-f1d4-4c1c-abfb-c45b3602d463`. Incluía `/usr/local/sbin/r36s-diagnostics`, acceso local `r36s`, SSH, perfil Wi-Fi de provisioning local, detección DC RK817 por GPIO, Netplan con `wlan0` y `r36s-enable-motd`, además de ramoops configurado. Ha sido reemplazada por la imagen experimental de reinicio que sigue.
+
+**Imagen experimental de reinicio (2026-10-24):** el build más reciente conserva esas funciones y añade el parche `0003-px30-prefer-cru-restart.patch`, que asigna prioridad 130 al reset PX30 CRU frente a 129 de PSCI. También corrige la creación de `/home/r36s`: el hook fija el grupo primario y modo `0750`, y `INCLUDE_HOME_DIR=yes` evita que Armbian descarte el directorio durante la copia al rootfs final. Archivo: `work/armbian-build/output/images/Armbian-unofficial_26.11.0-trunk_R36s_bookworm_current_6.18.58_minimal.img`; SHA-256 `c75a5031131b048309499b3c957dc7f6eda121e1734991d73eb657255de7b0a1`; UUID raíz `309e9b78-0d90-49aa-baa4-77d6f4a2e938`; tamaño 2.566.914.048 bytes. El kernel compiló en 172 s y el build de imagen terminó. `verify-image.py --check-filesystems` pasó FAT32, ext4, estructura, `boot.scr`, DTB y coincidencia exacta de U-Boot. `debugfs` sobre la partición ext4 confirmó `/home/r36s` como directorio 0750, UID/GID 1000, y `/etc/passwd`/`/etc/group` confirman que ambos corresponden a `r36s`. La prueba física del reinicio está registrada abajo y no funcionó: fue necesario pulsar el botón reset.
 
 **Integridad de la imagen anterior (2026-10-23 18:34 UTC):** en esa revisión, el SHA-256 coincidía con el registro entonces vigente; las 50 entradas de `reference/arkos-r36s/SHA256SUMS` verificaron `OK`. El patch y el recolector tenían los hashes registrados (`b61b231b…` y `e0882d94…`). Esta comprobación histórica no aplica al build actual ni repite la verificación estructural/FAT/ext4.
 
-**Verificación integral de la imagen actual (2026-10-23):** `python3 scripts/verify-image.py --check-filesystems --uboot-packages-dir work/armbian-build/output/debs ...img` terminó con `Filesystems: PASS` e `Image structure: PASS`. `fsck.fat -n` y `e2fsck -f -n` pasaron sobre copias temporales; `boot.scr` y CRC coinciden con `boot.cmd`; UUID raíz y DTB coinciden con el entorno; el U-Boot embebido coincide byte a byte con el paquete R36S seleccionado automáticamente. SHA-256 `683fabb38da0624529654deca0fe864af40ee4b8ff813fad5650926bfc890d28`; no se escribió ninguna imagen ni dispositivo. Esta verificación offline no prueba el arranque en la consola.
+**Verificación integral de la imagen anterior (2026-10-23):** `scripts/verify-image.py --check-filesystems --uboot-packages-dir ...` pasó FAT32/ext4, estructura, `boot.scr`, UUID, DTB y coincidencia byte a byte de U-Boot. Ese build ya fue reemplazado por la imagen con ramoops registrada arriba.
+**Build y verificación de ramoops (2026-10-24):** el build de ramoops previo terminó correctamente; el build experimental posterior está registrado arriba. El `.config` confirma `CONFIG_PSTORE=y`, `CONFIG_PSTORE_CONSOLE=y` y `CONFIG_PSTORE_RAM=y`; el DTB reserva `0xf0000` desde `0x110000`, con consola de `0x80000` y registros de `0x20000`. En el kernel fuente que compiló se verificó además el cambio de prioridad del handler PX30. No se escribió ninguna tarjeta ni se desplegó a la consola.
 
 ## Antes de encender
 
 ### Equipo para la prueba
 
-- Una microSD de prueba de al menos 8 GB, que se pueda borrar, y un lector que el host reconozca con su capacidad correcta. La imagen mide 2.516.582.400 bytes (2,52 GB decimales; 2,34 GiB). Confirmar con `lsblk` el modelo y tamaño del destino antes de escribir. No usar la tarjeta ArkOS.
-- Un adaptador USB-UART TTL de **3,3 V** que soporte 1.500.000 bit/s y cables Dupont. Para escuchar el arranque, conectar GND común y TX de la consola a RX del adaptador; dejar el TX/VCC del adaptador desconectados. Para enviar Enter después, confirmar primero el pin RX de la placa.
+- Una microSD de prueba de al menos 8 GB, que se pueda borrar, y un lector que el host reconozca con su capacidad correcta. La imagen mide 2.566.914.048 bytes (2,57 GB decimales; 2,39 GiB). Confirmar con `lsblk` el modelo y tamaño del destino antes de escribir. No usar la tarjeta ArkOS.
+- UART TTL de **3,3 V**, opcional para esta prueba porque la imagen guarda mensajes del kernel en ramoops. Si se dispone de adaptador que soporte 1.500.000 bit/s, conectar solo GND común y TX de la consola a RX del adaptador; dejar TX/VCC del adaptador desconectados. Para enviar Enter después, confirmar primero el pin RX de la placa.
 - Destornillador adecuado para abrir la carcasa, buena iluminación y cámara para registrar revisión serigrafiada, RAM y etiquetas/pads. No conectar cables hasta identificar GND, TX/RX y nivel lógico en esta revisión concreta.
 
 1. Usar una microSD de prueba, no la tarjeta ArkOS funcional. Conservar intacta la tarjeta original y una copia recuperable.
 2. Ejecutar `python3 scripts/verify-image.py --check-filesystems --uboot-packages-dir work/armbian-build/output/debs RUTA/IMAGEN.img` y confirmar que termina con `Image structure: PASS`; el verificador elige el paquete U-Boot cuyo binario coincide exactamente con la imagen. Comparar el SHA-256 mostrado con [el registro de build](armbian-support-survey.md). Se requieren `fsck.fat`, `e2fsck` y unos 1,9 GB libres para la copia temporal más grande. El comando no modifica la imagen.
 3. Antes de UART, inspeccionar y fotografiar la serigrafía de revisión/fecha de esta PCB y el marcado del chip de RAM; no deducirlos de `Panel 4`. El TPL actual usa inicialización de la familia DDR3 PX30. El marcado debe distinguir en particular DDR3/DDR3L de LPDDR3 y permitir verificar capacidad, voltaje y configuración de la placa; el dato de 1 GiB en Linux no basta. Las fotos públicas muestran que algunas placas llevan etiquetas UART en la propia PCB, pero son ejemplos de otras unidades y no sustituyen la identificación de esta consola. Identificar GND, TX, RX y nivel lógico de la revisión concreta antes de conectar. U-Boot declara `CONFIG_BAUDRATE=1500000` y debug UART base `0xFF160000`; en su DTS el alias `serial2` apunta a UART2 (`ff160000`). Aunque su DTS marca `stdout-path=serial2:115200n8`, el código de U-Boot usa esa propiedad para resolver el puerto y no interpreta la velocidad después de `:`. `board_f.c` toma `baudrate` del entorno y cae a `CONFIG_BAUDRATE` si no existe. El kernel candidato pide `console=ttyS2,1500000` (8N1 por defecto). La consulta de solo lectura a ArkOS encontró `fiq-debugger` con `rockchip,serial-id=<2>`, 1.500.000 bit/s y un `pinctrl-0` que resuelve a `uart2m1_xfer`. U-Boot y el kernel candidato también seleccionan `uart2m1_xfer` (GPIO2_PB4/PB6), por lo que el pinmux lógico coincide. Confirmar en la revisión concreta los pads accesibles y GND antes de conectar. Empezar la captura a 1.5 Mbaud; probar 115200 si la salida resulta ilegible, sin asumir que el DTS lo exige.
 4. No ejecutar `saveenv`, `fw_setenv` ni el selector de panel durante esta prueba.
+
+### Prueba de ramoops sin UART
+
+1. Escribir la imagen candidata en una microSD desechable; no usar la tarjeta ArkOS ni el almacenamiento interno. Verificar la imagen antes de escribirla con el comando de la sección anterior.
+2. Arrancar la consola y esperar hasta que SSH responda. Confirmar que el kernel registró ramoops:
+
+   ```sh
+   sudo dmesg | grep -iE 'ramoops|pstore'
+   sudo ls -la /sys/fs/pstore
+   ```
+
+   El mensaje debe mostrar la región `0x110000` de tamaño `0xf0000`. Si no aparece, detener la prueba y compartir esas salidas.
+3. Confirmar que la cuenta tenga su directorio personal; esta imagen incluye un arreglo para que Armbian conserve `/home/r36s` al copiar el rootfs:
+
+   ```sh
+   getent passwd r36s
+   stat -c '%U:%G %a %n' /home/r36s
+   ```
+
+   Debe mostrar `/home/r36s` con propietario `r36s:r36s` y modo `750`.
+4. Guardar el journal y solicitar un reinicio por software:
+
+   ```sh
+   sudo journalctl --flush
+   nexusctl --confirm hardware reboot
+   ```
+
+   Esperar hasta 90 segundos a que vuelva SSH. Si no vuelve, pulsar reset físico para recuperar la consola.
+5. Tras recuperar SSH, revisar los registros de ramoops y los que systemd haya archivado:
+
+   ```sh
+   sudo find /sys/fs/pstore /var/lib/systemd/pstore -maxdepth 2 -type f -print 2>/dev/null
+   sudo grep -R -n -E 'reboot|Restarting system|psci|PM:' /sys/fs/pstore /var/lib/systemd/pstore 2>/dev/null
+   ```
+
+   Buscar `console-ramoops-*` o `dmesg-ramoops-*` con marcas del apagado. Guardar el contenido antes de otra prueba. Si ramoops está inicializado pero no conserva mensajes después del reset, esa prueba no permite confirmar si el firmware conserva la RAM.
+
+La imagen candidata también contiene una prueba experimental del reinicio PX30: asigna prioridad 130 al handler de reset de CRU, por encima de la prioridad 129 de PSCI. Esto cambia qué controlador de reset atiende primero el reinicio en el PX30. Es una hipótesis basada en el orden de handlers del kernel; solo se considerará corregido si la consola vuelve a arrancar por sí sola después del comando. Si no arranca en 90 segundos, recuperar con el botón reset y guardar los logs. No ejecutar la prueba sobre la única tarjeta de arranque.
 
 ## Evidencia disponible sobre UART y banco de prueba
 
@@ -117,6 +158,9 @@ El perfil R36S crea la cuenta `r36s`, activa SSH y configura Wi-Fi antes del pri
 - **Captura parcial de alimentación en Armbian (2026-10-23 17:23 -03):** el usuario inició el muestreo de 60 s, pero lo interrumpió tras unos 18 s. `rk817-charger/online` permaneció en `0`; `battery/status` alternó `Not charging` → `Discharging` → `Not charging`. En una consulta SSH posterior, los contadores `/proc/interrupts` para `rk817_plug_in` (IRQ 38) y `rk817_plug_out` (IRQ 39) estaban ambos en cero; también el IRQ padre GPIO del RK817 estaba en cero. Como no consta en qué segundo se conectó/desconectó el cable, esta muestra no permite correlacionar una acción física con el estado/IRQ. `capacity=88`, `charge_now=2970096`, `charge_full=3380000` al consultar después. Repetir una prueba guiada con cable inicialmente fuera, conectarlo en un momento señalado y registrar estado + IRQs antes/después.
 - **Segunda captura de conexión en caliente compartida por el usuario (2026-10-23 17:24 -03):** el archivo `~/r36s-charge-test.txt` contiene 26 s de datos (17:24:08–17:24:33), antes de Ctrl-C. El usuario confirma que el cargador empezó desconectado, luego se conectó y finalmente se desconectó durante la muestra. A pesar de ambos cambios físicos, `rk817-charger/online` permaneció en `0` y ambos IRQ `rk817_plug_in`/`rk817_plug_out` en `0` durante toda la muestra; `battery/status` pasó de `Not charging` a `Discharging`. Esto confirma que en Armbian no se observaron las transiciones de conexión por el camino que informa el driver mainline. En la lectura posterior por SSH seguía `online=0`, `Discharging`. El archivo quedó en la R36S bajo `/home/r36s/r36s-charge-test.txt`.
 - **Prueba de persistencia Wi-Fi pendiente de reinicio (2026-10-23):** se intentó reiniciar con `sudo -n systemctl reboot` por SSH; `sudo` informó que requiere contraseña y no se realizó el reinicio. Falta reiniciar desde la consola o autorizar sudo con la contraseña actual y comprobar que `wlx7cc709338230` recupere DHCP/SSH.
+- **Pruebas de reinicio por `nexusd` (2026-10-24):** en las pruebas de 16:38 y 16:50 UTC, `systemd-logind` aceptó la orden y systemd detuvo servicios, sesiones y red de forma ordenada. La consola no volvió a estar accesible hasta pulsar el botón reset; el nuevo ID de boot y los mensajes de las 16:51 corresponden al arranque posterior al reset físico, no prueban que el reinicio por software completara. No hay UART ni mensajes de kernel posteriores al apagado de servicios, así que el fallo queda en la etapa final del reinicio o el firmware/arranque siguiente.
+- **Prueba del parche de prioridad PX30 CRU (2026-10-25):** el usuario grabó la imagen SHA-256 `c75a5031…` y ejecutó el reinicio por software. Compartió `journalctl --list-boots`: el boot anterior terminó a las 02:36:37 UTC y el siguiente comenzó a las 02:37:08 UTC. Ramoops archivó `/var/lib/systemd/pstore/console-ramoops-0` con `[ 131.872900] reboot: Restarting system`. El usuario confirma que tuvo que pulsar manualmente el botón reset para que la consola arrancara. Por tanto, el handler CRU prioritario no resolvió el reinicio autónomo, aunque el kernel sí llegó a la solicitud de reinicio y pstore conservó esa última línea. El log disponible no muestra si la escritura CRU se ejecutó ni la fase exacta del bloqueo; falta captura UART o medición adicional del reset/energía.
+- **Ramoops y ArkOS (2026-10-24):** el DTB local ArkOS de esta misma unidad declara un búfer `ramoops` de 960 KiB en `0x00110000`, con `console-size=0x80000` y `record-size=0x20000`. En la Armbian activa se confirmó `CONFIG_PSTORE=y`, `CONFIG_PSTORE_RAM=m`, sin módulo cargado ni nodo `/reserved-memory`; `/sys/fs/pstore` está montado pero el usuario SSH no puede leer su contenido. El DTS candidato reserva la misma región y el kernel nuevo configura `PSTORE_RAM=y` y `PSTORE_CONSOLE=y`. El build y la verificación offline ya pasaron; falta probar la imagen en una microSD y confirmar que aparece el log del apagado en `/sys/fs/pstore` o en `/var/lib/systemd/pstore`. Procedimiento sin UART en la sección anterior.
 - **Terminal funcional:** el kernel monta la raíz Debian y ofrece login por UART.
 - **Compatibilidad de hardware:** queda pendiente hasta validar en esta unidad pantalla, controles, audio, PMIC/batería, almacenamiento y apagado. No generalizar el resultado a otras revisiones R36S.
 

@@ -33,6 +33,14 @@ coincide en resolución, geometría y pin de reset; el patch propio usa los
 El controlador sigue siendo una hipótesis de software, no una lectura
 electrónica del panel.
 
+La lectura local del DTB ArkOS de esta misma unidad encontró `ramoops` con
+una región reservada de 960 KiB desde `0x00110000`, un búfer de consola de
+512 KiB y registros de 128 KiB. El DTB Armbian del proyecto incorpora esa
+configuración para conservar mensajes del kernel entre reinicios. Esto es
+una referencia observada en esta unidad; no confirma todavía que el firmware
+preserve la RAM durante un reinicio por software. La imagen candidata que la
+incluye se compiló y verificó offline; falta validarla en la consola.
+
 No copiar la secuencia binaria del DTB ArkOS: su licencia/procedencia no se ha
 resuelto. El patch usa la secuencia del driver R36S publicado bajo GPL-2.0; sus
 153 registros principales coinciden con los del DTB Panel 4 local. El patch

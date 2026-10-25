@@ -10,3 +10,13 @@ function custom_kernel_config__r36s_required_drivers() {
 		CONFIG_IIO_MUX
 	)
 }
+
+# Keep the pstore RAM backend built into the kernel. The R36S DTB reserves
+# the same 960 KiB region used by the inspected ArkOS DTB for ramoops.
+function custom_kernel_config__r36s_pstore() {
+	opts_y+=(
+		CONFIG_PSTORE
+		CONFIG_PSTORE_CONSOLE
+		CONFIG_PSTORE_RAM
+	)
+}

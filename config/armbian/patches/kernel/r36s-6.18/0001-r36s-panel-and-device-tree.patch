@@ -298,7 +298,7 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3326-odroid-go2-v11.dtb
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3326-r36s-panel4.dts
-@@ -0,0 +1,717 @@
+@@ -0,0 +1,731 @@
 +// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 +/*
 + * Copyright (c) 2024 Andre Renaud <andre@ignavus.net>
@@ -314,6 +314,20 @@
 +/ {
 +    model = "R36S (Panel 4 software profile)";
 +	compatible = "gameconsole,r36s-panel4", "rockchip,rk3326";
++
++	/* Match the ramoops reservation used by the inspected ArkOS DTB. */
++	reserved-memory {
++		#address-cells = <2>;
++		#size-cells = <2>;
++		ranges;
++
++		ramoops@110000 {
++			compatible = "ramoops";
++			reg = <0x0 0x00110000 0x0 0x000f0000>;
++			record-size = <0x00020000>;
++			console-size = <0x00080000>;
++		};
++	};
 +
 +	aliases {
 +		mmc0 = &sdmmc;

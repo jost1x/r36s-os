@@ -41,6 +41,9 @@ BOOT_FDT_FILE="rockchip/rk3326-r36s-panel4.dtb"
 
 IMAGE_PARTITION_TABLE="msdos"
 BOOTFS_TYPE="fat"
+# Armbian excludes /home/* while copying the staging rootfs into the final
+# image unless this board opts in. Preserve the pre-created r36s home.
+INCLUDE_HOME_DIR="yes"
 
 # Armbian's generic serial-getty override enables autologin but omits an
 # explicit speed. The R36S kernel console is ttyS2 at 1.5 Mbaud; pin that
@@ -74,9 +77,12 @@ function post_family_tweaks__r36s_console_access() {
 	fi
 
 	chroot_sdcard groupadd --force sudo
+	chroot_sdcard groupadd --force r36s
 	if ! chroot_sdcard id -u r36s >/dev/null 2>&1; then
-		chroot_sdcard useradd --create-home --shell /bin/bash --groups sudo r36s
+		chroot_sdcard useradd --create-home --gid r36s --shell /bin/bash --groups sudo r36s
 	fi
+	chroot_sdcard usermod --home /home/r36s r36s
+	chroot_sdcard install -d -o r36s -g r36s -m 0750 /home/r36s
 	chroot_sdcard usermod --append --groups sudo r36s
 	printf 'r36s:%s\n' "${R36S_USER_PASSWORD}" | chroot_sdcard chpasswd
 	chroot_sdcard passwd --lock root
