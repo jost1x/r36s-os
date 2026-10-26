@@ -12,6 +12,7 @@ Proyecto para investigar y desarrollar una distribución Linux para la consola R
 - [Estado de los device trees R36S](device-trees/README.md)
 - [Plan de prueba de la primera imagen](docs/first-image-test-plan.md) (incluye [`scripts/collect-r36s-diagnostics.sh`](scripts/collect-r36s-diagnostics.sh) para recopilar un informe de solo lectura tras el primer arranque)
 - [Estado de fases y criterios de salida](docs/phase-status.md)
+- [Paquetes runtime necesarios para NEXUS](docs/nexus-runtime-packages.md)
 
 Los datos del inventario proceden de una sesión SSH de solo lectura en una consola con ArkOS. Son observaciones de esa unidad; no deben tomarse como especificación de todas las revisiones R36S.
 
