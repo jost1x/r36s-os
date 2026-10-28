@@ -16,6 +16,7 @@
 
 	aliases {
 		mmc0 = &sdmmc;
+		mmc1 = &sdio;
 	};
 
 	chosen {
@@ -587,6 +588,18 @@
 	sd-uhs-sdr25;
 	sd-uhs-sdr50;
 	sd-uhs-sdr104;
+	vmmc-supply = <&vcc_sd>;
+	vqmmc-supply = <&vccio_sd>;
+	status = "okay";
+};
+
+/* TF2, present on R36S-V22 Panel 4; start at legacy SD high-speed only. */
+&sdio {
+	bus-width = <4>;
+	cap-sd-highspeed;
+	max-frequency = <50000000>;
+	card-detect-delay = <800>;
+	cd-gpios = <&gpio3 RK_PB6 GPIO_ACTIVE_LOW>;
 	vmmc-supply = <&vcc_sd>;
 	vqmmc-supply = <&vccio_sd>;
 	status = "okay";

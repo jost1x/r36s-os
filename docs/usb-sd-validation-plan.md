@@ -14,6 +14,25 @@ por puerto y lector microSD con el DTB y kernel Armbian candidatos.
   se ha validado con el kernel candidato.
 - ArkOS reportó `vccio_sd=1,8 V` y `vcc_sd=3,0 V`. El candidato conserva esos
   valores operativos, pero el rango ajustable de `vccio_sd` difiere.
+- La consola del proyecto es R36S-V22, fecha 2024-12-18, lote 2548 (Panel 4
+  V22). En ArkOS, `ff380000.dwmmc` se registra como segundo host, pero la tarjeta
+  de Armbian insertada allí falla con `-ETIMEDOUT` al inicializarse. El DTS
+  Armbian original solo habilitaba `ff370000`.
+- El DTS Panel4-V22 publicado en AeolusUX/R36S-DTB habilita `ff380000`, usa
+  SDIO en GPIO1 PC4-PC9, detección en GPIO3 PB6 y los reguladores `vcc_sd` /
+  `vccio_sd`. El DTB candidato compilado habilita ese host como `mmc1`, a 50
+  MHz, sin UHS, con detección activa baja y los mismos reguladores. Esto es una
+  configuración de prueba derivada de la referencia; la prueba de hardware
+  está registrada en la sección Estado.
+- **Prueba TF2 en la R36S-V22 (2026-10-28):** Armbian `6.18.58` detectó la
+  tarjeta `SC128` de 119 GiB como `/dev/mmcblk1` en `ff380000`, con negociación
+  a 50 MHz y mensaje `new high speed SDXC card`. Enumeró `BOOT` (vfat), `root`
+  (ext4) y `EASYROMS` (exfat). `EASYROMS` se montó primero en solo lectura y se
+  listaron sus carpetas. Después se montó en lectura/escritura, se creó un
+  archivo nuevo `r36s-write-test-<fecha>.txt`, se leyó su contenido tras
+  `sync`, y se desmontó sin errores. Se confirma detección, lectura y escritura
+  básica en esta tarjeta y consola; no se ha medido escritura sostenida ni
+  probado otra tarjeta.
 
 ## Pasos: USB
 
@@ -34,8 +53,10 @@ por puerto y lector microSD con el DTB y kernel Armbian candidatos.
 
 1. Usar una tarjeta de prueba y guardar hash/imagen base antes de probar. No
    usar la tarjeta ArkOS funcional.
-2. Confirmar que el kernel enumera el lector y registrar bus, timing negociado,
-   frecuencia/tensión reportada, errores CRC/I/O y eventos de inserción.
+2. Confirmar que el kernel enumera ambos lectores (`mmc0`/`mmc1`) y registrar
+   controlador, timing negociado, frecuencia/tensión reportada, errores
+   CRC/I/O y eventos de inserción. Para aislar el segundo slot, empezar con el
+   modo conservador de 50 MHz sin UHS antes de probar modos más rápidos.
 3. Probar lectura/escritura de archivos en la tarjeta desechable, sincronizar y
    verificar hashes; repetir reinicio en frío y extracción segura.
 4. Comparar con ArkOS los reguladores `vccio_sd`/`vcc_sd`, pin de detección,
@@ -56,5 +77,11 @@ por puerto y lector microSD con el DTB y kernel Armbian candidatos.
 
 ## Estado
 
-Plan preparado. La detección de `mmc0` y el soporte USB están descritos por
-software; falta validación funcional de los conectores con Armbian.
+**Subhito microSD TF2: validado y cerrado para la tarjeta probada.** La imagen
+se compiló el 2026-10-28 y pasó la verificación offline de FAT32, ext4,
+estructura, `boot.scr`, DTB y U-Boot exacto. El DTB habilita `mmc1` en
+`ff380000`, bus SD de 4 bits hasta 50 MHz, sin UHS. En la consola, el kernel
+enumeró la tarjeta SC128 de 119 GiB como SDXC a 50 MHz; se leyó `EASYROMS` en
+solo lectura y se completó una escritura pequeña, lectura de regreso, `sync` y
+desmontaje limpio. No se midió rendimiento sostenido ni se validaron otras
+tarjetas. La validación de conectores USB y carga continúa pendiente.
