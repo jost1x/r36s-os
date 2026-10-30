@@ -9,8 +9,38 @@ controles del códec y rutas de alimentación declaradas por el DTS candidato.
 
 - ArkOS y el candidato declaran códec RK817; Armbian detectó la tarjeta ALSA,
   el códec y su mixer.
-- El DTS configura rutas de altavoz/audífonos, pero no existe evidencia
-  registrada de reproducción o detección física correcta en Armbian.
+- El DTS configura rutas de altavoz/audífonos. La detección ALSA por sí sola no
+  demuestra que cada ruta física funcione; véanse los resultados de la prueba
+  en hardware del 2026-10-28.
+
+## Prueba física en la R36S (2026-10-28)
+
+Unidad R36S-V22, perfil Panel 4 por software, con la imagen Armbian del kernel
+6.18.58. Las pruebas controladas se hicieron sin cargador, con `Master` al 79 %
+(201/255, −20,12 dB), dispositivo `hw:0,0`, tono seno de 1000 Hz y hasta 8 s
+por ejecución. `amixer -c 0 scontents` mostró `Master` estéreo con el mismo
+nivel en ambos canales y los controles `Mic Capture Gain` y `Playback Mux`.
+
+| Salida / selección | Resultado observado |
+|---|---|
+| Parlante interno, `Playback Mux = HP` | Sonó en las pruebas controladas. |
+| Parlante interno, `Playback Mux = SPK` | No sonó en dos pruebas consecutivas con el mismo volumen y sin cargador. |
+| Audífonos estéreo de 3,5 mm con dos anillos (TRS), `Playback Mux = HP` | Sonaron ambos lados. |
+| Primeros audífonos, con conector de cuatro contactos según el usuario, `Playback Mux = HP` | Solo sonó el lado izquierdo. La prueba aislada confirmó que el canal izquierdo suena y el derecho no; los mismos audífonos suenan por ambos lados en otro dispositivo. |
+| Segundo par de audífonos de cuatro contactos, `Playback Mux = HP` | Funcionaron bien por ambos canales, según la prueba posterior del usuario. |
+
+La reproducción por el parlante y por ambos canales de audífonos TRS queda
+validada para esta unidad e imagen. La diferencia entre `HP` y `SPK` es
+reproducible en las pruebas informadas, pero todavía no se ha determinado si se
+debe al enrutamiento del DTS/códec o a otra condición de la placa. Como el
+segundo par de audífonos de cuatro contactos funcionó por ambos canales, el
+fallo del primer par no demuestra un problema del jack de la consola; la causa
+específica del fallo de esos audífonos no está identificada.
+
+No se validaron la detección automática del jack, el cambio de ruta al insertar
+y retirar audífonos, ni la persistencia de la selección después de reiniciar.
+Durante estas pruebas, `Playback Mux = HP` fue la selección que funcionó para
+el parlante y los audífonos TRS.
 
 ## Pasos
 
@@ -27,8 +57,8 @@ controles del códec y rutas de alimentación declaradas por el DTS candidato.
    jack antes de cambiar el DTS.
 5. Si hay fallo, probar una hipótesis por cambio: ruta DAPM, nombre de control,
    GPIO, pinmux o alimentación. Compilar y revisar el DTB de cada imagen.
-6. Repetir después de reinicio y confirmar que las rutas persisten sin
-   inicialización manual ni errores del driver.
+6. **Pendiente:** repetir después de reinicio y confirmar que las rutas
+   persisten sin inicialización manual ni errores del driver.
 
 ## Criterios de cierre
 
@@ -39,5 +69,9 @@ controles del códec y rutas de alimentación declaradas por el DTS candidato.
 
 ## Estado
 
-Plan preparado. La detección de ALSA está observada; las rutas físicas y el
-comportamiento del jack siguen sin validar.
+Reproducción física validada parcialmente en la unidad probada: parlante
+interno y ambos canales de audífonos TRS y de un segundo par de cuatro contactos
+funcionan con `Playback Mux = HP`. `SPK` no produjo sonido en dos pruebas
+controladas. El primer par de cuatro contactos solo sonó por el canal izquierdo;
+ese resultado aislado no señala un fallo del jack. La detección y ruta automática
+del jack siguen pendientes.

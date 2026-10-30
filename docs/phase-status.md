@@ -1,6 +1,6 @@
 # Estado de fases del proyecto
 
-Actualizado: 2026-10-24.
+Actualizado: 2026-10-28.
 
 Este documento sigue los criterios del brief inicial. “Compilado” y “verificado offline” no equivalen a “funciona en la consola”. La Fase 1 permanece abierta hasta observar un arranque real de esta unidad.
 
@@ -31,7 +31,7 @@ La prueba inicial no debe escribir la microSD ArkOS funcional ni guardar cambios
 
 | Fase | Estado | Criterio para iniciar o cerrar |
 |---|---|---|
-| 2 — Soporte de hardware | No iniciada como fase de validación | Iniciar tras obtener una terminal en la unidad. Validar por separado pantalla, controles/sticks, audio, carga/batería, CPU y apagado; no generalizar a otras revisiones. |
+| 2 — Soporte de hardware | Iniciada parcialmente | En esta unidad se observó imagen en pantalla y respuesta de botones/sticks con el launcher; el audio está validado parcialmente. `Playback Mux = SPK` y el canal derecho de unos audífonos de cuatro contactos fallaron en las pruebas registradas; véase [`audio-validation-plan.md`](audio-validation-plan.md). Falta validar detección/ruta automática del jack y completar por separado pantalla, controles/sticks, carga/batería, CPU y apagado; no generalizar a otras revisiones. |
 | 3 — Sistema híbrido | No iniciada | Solo después de estabilizar el arranque y soporte base. Añadir RetroArch/frontend y cambio de modo Linux/Gaming. |
 | 4 — Optimización | No iniciada | Requiere métricas reproducibles de arranque, memoria, rendimiento, temperatura y batería. |
 | 5 — Distribución | No iniciada | Requiere imagen instalable/recuperable, build reproducible, versionado, instalación, actualización y recuperación documentadas. |

@@ -146,6 +146,8 @@ PY
 	local dropin="${SDCARD}/etc/systemd/system/getty@tty1.service.d/override.conf"
 	local info_script="${SDCARD}/usr/local/sbin/r36s-console-info"
 	local info_service="${SDCARD}/etc/systemd/system/r36s-show-ip.service"
+	local banner_service="${SDCARD}/etc/systemd/system/r36s-console-banner.service"
+	local info_timer="${SDCARD}/etc/systemd/system/r36s-show-ip.timer"
 	local motd_service="${SDCARD}/etc/systemd/system/r36s-enable-motd.service"
 	local wants="${SDCARD}/etc/systemd/system/multi-user.target.wants"
 	mkdir -p "$(dirname -- "${dropin}")"
@@ -157,9 +159,14 @@ Type=idle
 EOF
 	install -D -m 0755 "${SRC}/userpatches/scripts/r36s-console-info.sh" "${info_script}"
 	install -D -m 0644 "${SRC}/userpatches/systemd/r36s-show-ip.service" "${info_service}"
+	install -D -m 0644 "${SRC}/userpatches/systemd/r36s-console-banner.service" "${banner_service}"
+	install -D -m 0644 "${SRC}/userpatches/systemd/r36s-show-ip.timer" "${info_timer}"
 	install -D -m 0644 "${SRC}/userpatches/systemd/r36s-enable-motd.service" "${motd_service}"
 	mkdir -p "${wants}"
-	ln -sf ../r36s-show-ip.service "${wants}/r36s-show-ip.service"
+	ln -sf ../r36s-console-banner.service "${wants}/r36s-console-banner.service"
+	local timer_wants="${SDCARD}/etc/systemd/system/timers.target.wants"
+	mkdir -p "${timer_wants}"
+	ln -sf ../r36s-show-ip.timer "${timer_wants}/r36s-show-ip.timer"
 	ln -sf ../r36s-enable-motd.service "${wants}/r36s-enable-motd.service"
 	unset R36S_USER_PASSWORD R36S_WIFI_PASSWORD R36S_WIFI_SSID
 	if (( had_xtrace )); then

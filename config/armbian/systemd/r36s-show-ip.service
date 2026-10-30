@@ -1,16 +1,12 @@
 [Unit]
-Description=Show R36S network address on the built-in screen
-Wants=network-online.target
-After=network-online.target
+Description=Show R36S network address when Wi-Fi is ready
+After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/sbin/r36s-console-info
+ExecStart=/usr/local/sbin/r36s-console-info --check
 StandardOutput=tty
 TTYPath=/dev/tty1
 TTYReset=no
 TTYVHangup=no
 TTYVTDisallocate=no
-
-[Install]
-WantedBy=multi-user.target

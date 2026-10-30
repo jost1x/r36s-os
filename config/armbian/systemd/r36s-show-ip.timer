@@ -1,0 +1,11 @@
+[Unit]
+Description=Check for the R36S Wi-Fi address without blocking startup
+
+[Timer]
+OnBootSec=5s
+OnUnitActiveSec=5s
+AccuracySec=1s
+Unit=r36s-show-ip.service
+
+[Install]
+WantedBy=timers.target

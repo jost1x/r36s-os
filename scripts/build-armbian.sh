@@ -33,6 +33,10 @@ CONSOLE_INFO_SRC="${ROOT_DIR}/scripts/r36s-console-info.sh"
 CONSOLE_INFO_DST="${WORK_DIR}/userpatches/scripts/r36s-console-info.sh"
 CONSOLE_SERVICE_SRC="${ROOT_DIR}/config/armbian/systemd/r36s-show-ip.service"
 CONSOLE_SERVICE_DST="${WORK_DIR}/userpatches/systemd/r36s-show-ip.service"
+CONSOLE_BANNER_SERVICE_SRC="${ROOT_DIR}/config/armbian/systemd/r36s-console-banner.service"
+CONSOLE_BANNER_SERVICE_DST="${WORK_DIR}/userpatches/systemd/r36s-console-banner.service"
+CONSOLE_TIMER_SRC="${ROOT_DIR}/config/armbian/systemd/r36s-show-ip.timer"
+CONSOLE_TIMER_DST="${WORK_DIR}/userpatches/systemd/r36s-show-ip.timer"
 MOTD_SERVICE_SRC="${ROOT_DIR}/config/armbian/systemd/r36s-enable-motd.service"
 MOTD_SERVICE_DST="${WORK_DIR}/userpatches/systemd/r36s-enable-motd.service"
 PROVISIONING_SRC="${ROOT_DIR}/.local/r36s-provisioning.env"
@@ -247,6 +251,20 @@ if [[ ! -e "${CONSOLE_SERVICE_DST}" ]]; then
 	fi
 fi
 echo "R36S console IP display service installed at ${CONSOLE_SERVICE_DST}"
+
+for item in "${CONSOLE_BANNER_SERVICE_SRC}:${CONSOLE_BANNER_SERVICE_DST}" "${CONSOLE_TIMER_SRC}:${CONSOLE_TIMER_DST}"; do
+	IFS=: read -r source destination <<< "${item}"
+	mkdir -p "$(dirname -- "${destination}")"
+	if [[ -e "${destination}" ]] && ! cmp -s "${source}" "${destination}"; then
+		echo "Existing R36S boot display unit differs from this project: ${destination}" >&2
+		echo "Review it manually; the script will not overwrite it." >&2
+		exit 1
+	fi
+	if [[ ! -e "${destination}" ]]; then
+		install -m 0644 "${source}" "${destination}"
+	fi
+done
+echo "R36S nonblocking console banner and IP timer installed"
 
 mkdir -p "$(dirname -- "${MOTD_SERVICE_DST}")"
 if [[ -e "${MOTD_SERVICE_DST}" ]] && ! cmp -s "${MOTD_SERVICE_SRC}" "${MOTD_SERVICE_DST}"; then
